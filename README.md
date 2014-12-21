@@ -7,9 +7,13 @@ What is the goal of this project?
 ============
 To create a modular base on which it is possible to send one computer's input to another while being being able to observe the display, all remotely over a network connection.
 This is facilitated by a connection over TCP, where the input and other data is transferred.
+
 Being server-based, a client can connect to a server and provide it with input specified in a manner of types and values. These types and values hold no significance unto themselves before they are used with an input handler on the server side. The client may acquire such input from a plugin of its own, which may read joystick input, mouse input, keyboard input and forward this.
+
 The server, with the help of plugins, will then be able to interpret the input it receives over TCP and set it into motion. For instance, it may emulate mouse movement, scrolling, key presses and joystick movement on the server side.
+
 In its standard condition the server is not able to do anything of the sort, and thus relies on plugins to act upon the signals. These plugins register for different "types" of input, identified by integers, in order to filter them. These plugins may even send input signals between themselves, making way for remapping of input.
+
 On the side of forwarding input, a second TCP connection is used to forward an audio/video stream. This also relies on plugins in order to capture and encode the input (in separate instances, such that encoders are kept platform-independent) from the server, which is followingly sent to the client for viewing. It would be preferrable to have a low-latency stream, and as such codecs meant for low latency connectivity are to be preferred, however none of this is mandatory (yet).
 
 What is the *current* condition of this project?
