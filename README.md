@@ -18,7 +18,7 @@ On the side of forwarding input, a second TCP connection is used to forward an a
 
 What is the *current* condition of this project?
 ============
- - The client is in need of a refactor in order to better suit the changes which have been made incrementally. Incremental development has necessitated this, as a lot of the code was written to work for a different purpose.
+ - The client is in need of a refactor in order to better suit the changes which have been made incrementally. Incremental development has necessitated this as a lot of the code was written to work for a different purpose. A lot of the code could become a lot simpler by only doing minor changes, but this will have to wait. Server-side is mostly clean.
  - The client is mostly platform-indepedent, confirmed to run on both Android and desktop Linux. Results showed low input lag in numerous tests where a Wi-Fi device connected to a LAN-connected device, with minor hiccups, but in general showing good progress, if not completion.
  - Client uses a QML interface to remain native-looking on most platforms. It is not 100% native-looking, but good for mobile platforms.
  - The client is in dire need of a code cleanup on the QML side. Core functionality is present but in disarray.
