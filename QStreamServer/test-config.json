@@ -3,7 +3,8 @@
     {
         "i-port": 46600,
         "av-port": 46601,
-        "interface": "eth0"
+        "interface": "eth0",
+        "stream-location":"rtmp://www.some-url.net/stream.mov"
     },
     "input-handlers":
     [
