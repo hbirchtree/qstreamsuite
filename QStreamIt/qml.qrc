@@ -1,0 +1,39 @@
+<RCC>
+    <qresource prefix="/">
+        <file>gethost.qml</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="absolute">icons/input-mouse.png</file>
+        <file alias="relative">icons/input-tablet.png</file>
+        <file alias="disco">icons/network-disconnect.png</file>
+        <file alias="conn">icons/network-wired.png</file>
+        <file alias="fit">icons/view-fullscreen.png</file>
+        <file alias="audio">icons/audio-card.png</file>
+        <file alias="sound">icons/audio-volume-high.png</file>
+        <file alias="mute">icons/audio-volume-muted.png</file>
+        <file alias="js-cfg">icons/games-config-custom.png</file>
+        <file alias="js">icons/input-gaming.png</file>
+        <file alias="kbd">icons/input-keyboard.png</file>
+        <file alias="pause">icons/media-playback-pause.png</file>
+        <file alias="start">icons/media-playback-start.png</file>
+        <file alias="stop">icons/media-playback-stop.png</file>
+        <file alias="sec">icons/object-locked.png</file>
+        <file alias="unsec">icons/object-unlocked.png</file>
+        <file alias="test">icons/rating.png</file>
+        <file alias="focus">icons/transform-move.png</file>
+        <file alias="video">icons/video-display.png</file>
+        <file alias="tools">icons/applications-system.png</file>
+        <file alias="x">icons/edit-delete.png</file>
+    </qresource>
+    <qresource prefix="/qmlui">
+        <file>StatusBubble.qml</file>
+        <file>Display.qml</file>
+        <file>StreamView.ui.qml</file>
+        <file>LoaderAnim.qml</file>
+        <file>ClientConnect.qml</file>
+        <file>MouseButtons.qml</file>
+        <file>DigitalKey.qml</file>
+        <file>TouchOverlay.qml</file>
+        <file>AnalogStickImplementation.qml</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,35 @@
+{
+    "streamer-config":
+    {
+        "i-port": 46600,
+        "av-port": 46601,
+        "interface": "eth0"
+    },
+    "input-handlers":
+    [
+        {
+            "enabled": true,
+            "library": "libx11-xinput-handler.so.1.0.0",
+            "mapping": ["default-mouse","default-kbd"]
+        },
+        {
+            "enabled": true,
+            "library": "libjs-input.so",
+            "mapping": [301]
+        }
+
+    ],
+    "output-handlers":
+    [
+        {
+            "enabled": true,
+            "library": "libx11-desktop-output.so",
+            "mapping": 0
+        },
+        {
+            "enabled": true,
+            "library": "libpulse-output.so",
+            "mapping": 1
+        }
+    ]
+}
