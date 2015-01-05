@@ -24,6 +24,7 @@ What is the *current* condition of this project?
  - The client is in dire need of a code cleanup on the QML side. Core functionality is present but in disarray.
  - Client supports plugins by placing a file "plugins.json" in the working directory with a JSON array of file names for libraries. Confirmed to be working by an example of an SDL2 joystick implementation.
  - Client is capable of receiving and transmitting plugin events, however I would like to add mouse grabbing.
- - The server has no platform-bound code, but is yet to be tested on anything other than Linux. At this writing moment there are is only an X11 input handler.
  - Plugin support on the server is finished in terms of input handling, nothing to be done.
  - Client-side and server-side plugin interfaces for input emission and handling are mostly done and ready to be implemented for different platforms. An X11 input handler is already complete, a joystick input plugin is complete, and a joystick remapper is underway.
+ - The server has no platform-bound code, and most support is aimed at Linux desktop with X11. (Although I would love to get a Wayland plugin in there) Windows support is none of my concern, reason being that I rarely use it, and generally have little interest in it. Some attempts have been made to run the server on Windows with little success, and so I will leave it at that.
+ - Code is quite fluctuating, and I am thus not uploading it periodically. Sometimes it is all broken, I fix it, and I break it again. That's the circle of software development. (In this case)
