@@ -21,7 +21,7 @@ AnalogStick{
     onMouseMovedRel: {
         dot.x=x+dot.width/4
         dot.y=y+dot.width/4
-        newEvent(type,x,y)
+        newEvent(type,x/width*150,y/height*150)
     }
     onMouseReleased:{
         dot.x=width/2-dot.width/2

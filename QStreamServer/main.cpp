@@ -1,6 +1,7 @@
 #include "streamserver.h"
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QDebug>
 
 int main(int argc, char *argv[])
 {
@@ -21,6 +22,5 @@ int main(int argc, char *argv[])
 
     StreamServer w(configFile);
     w.show();
-
     return a.exec();
 }

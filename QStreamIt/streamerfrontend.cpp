@@ -19,24 +19,28 @@ StreamerFrontend::~StreamerFrontend()
 }
 
 void StreamerFrontend::setupInputSocket(QString ipAddress, quint16 port){
-    inputPipeHandler = new JsonComm(this);
     QTcpSocket *socket = new QTcpSocket(this);
     inputPipe = new SocketWorker(socket,ipAddress,port,this);
 
     connect(inputPipe,SIGNAL(forwardError(QString)),SLOT(displayError(QString)));
     connect(inputPipe,SIGNAL(reportLogEntry(QString)),SLOT(displayError(QString)));
+    connect(inputPipe,SIGNAL(newCommandSignal(qint8,qint64)),SLOT(handleCommandSignal(qint8,qint64)));
+
+    connect(inputPipe,SIGNAL(newDataSignal(qint8,QByteArray*)),dataStore,SLOT(set_data(qint8,QByteArray*)));
+    connect(this,SIGNAL(requestData(qint8,QByteArray*,bool*)),dataStore,SLOT(get_data(qint8,QByteArray*,bool*)));
+
+    connect(inputPipe,SIGNAL(reportLogEntry(QString)),SLOT(displayError(QString)));
+    connect(inputPipe,SIGNAL(dataReceived(QByteArray*)),inputPipe,SLOT(interpretTransmission(QByteArray*)));
+
+    connect(inputPipe,SIGNAL(clientFailed()),qmlConnector,SLOT(fail_disconnect()));
+    connect(inputPipe,SIGNAL(clientConnecting()),qmlConnector,SLOT(connectingServer()));
+    connect(inputPipe,SIGNAL(clientConnected()),qmlConnector,SLOT(connectedServer()));
+    connect(inputPipe,SIGNAL(clientDisconnected()),qmlConnector,SLOT(main_disconnect()));
+
     connect(inputPipe,SIGNAL(clientDisconnected()),SLOT(socket_disconnectServer()));
     connect(inputPipe,SIGNAL(clientFailed()),SLOT(socket_disconnectServer()));
-    connect(inputPipe,SIGNAL(clientFailed()),qmlConnector,SLOT(fail_disconnect()));
-    connect(inputPipeHandler,SIGNAL(newCommandSignal(qint8,qint16)),SLOT(handleCommandSignal(qint8,qint16)));
-    connect(inputPipeHandler,SIGNAL(newDataSignal(qint8,QByteArray*)),dataStore,SLOT(set_data(qint8,QByteArray*)));
-    connect(this,SIGNAL(requestData(qint8,QByteArray*,bool*)),dataStore,SLOT(get_data(qint8,QByteArray*,bool*)));
-//    connect(inputPipeHandler,SIGNAL(newDataSignal(qint16,QByteArray*)),SLOT(printPack(qint16,QByteArray*)));
-    connect(inputPipeHandler,SIGNAL(reportLogEntry(QString)),SLOT(displayError(QString)));
-    connect(inputPipe,SIGNAL(dataReceived(QByteArray*)),inputPipeHandler,SLOT(interpretTransmission(QByteArray*)));
-    connect(inputPipe,SIGNAL(clientConnected()),qmlConnector,SLOT(connectedServer()));
 
-    connect(inputPipe,SIGNAL(destroyed()),inputPipeHandler,SLOT(deleteLater()));
+    connect(inputPipe,SIGNAL(destroyed()),inputPipe,SLOT(deleteLater()));
 //    connect(inputPipe,SIGNAL(clientDisconnected()),inputPipe,SLOT(deleteLater()));
     connect(inputPipe,SIGNAL(clientFailed()),inputPipe,SLOT(deleteLater()));
 
@@ -49,8 +53,13 @@ void StreamerFrontend::setupQMLUI(QUrl qmlUi){
     qmlRegisterType<EventCapture>("EventCapture",1,0,"EventCaptor");
     qmlRegisterType<AnalogStickSurface>("AnalogStickComponent",1,0,"AnalogStick");
     qmlRegisterType<TrackPointComponent>("TrackPointComponent",1,0,"TrackPoint");
+    qmlRegisterType<DigitalKeySurface>("DigitalKeyComponent",1,0,"DigitalKeySurface");
     qmlBase->load(qmlUi);
     qmlConnector = qmlBase->rootObjects().at(0);
+    qmlConnector->setProperty("s_x",0);
+    qmlConnector->setProperty("s_y",0);
+    qmlConnector->setProperty("s_w",0);
+    qmlConnector->setProperty("s_h",0);
 
     connect(this,SIGNAL(qmlConnectedStatus()),qmlConnector,SLOT(connectedServer()));
     connect(qmlConnector,SIGNAL(captureEvent(int,int,int)),SLOT(sendEvent(int,int,int)));
@@ -87,15 +96,10 @@ void StreamerFrontend::socket_disconnectServer(){
 
 void StreamerFrontend::sendEvent(int type, int val1, int val2){
     if(g_connectedState)
-        inputPipe->transmitData(inputPipeHandler->createTransmission(type,val1,val2));
+        inputPipe->sendPacket(type,val1,val2);
 }
 
-void StreamerFrontend::sendEvent(qint16 type, qint64 val1, qint64 val2){
-    if(g_connectedState)
-        inputPipe->transmitData(inputPipeHandler->createTransmission(type,val1,val2));
-}
-
-void StreamerFrontend::handleCommandSignal(qint8 command,qint16 value){
+void StreamerFrontend::handleCommandSignal(qint8 command,qint64 value){
     switch(command){
     case StreamerEnums::COMMAND_C_SET_STREAM:{
         bool ok = false;
@@ -107,19 +111,22 @@ void StreamerFrontend::handleCommandSignal(qint8 command,qint16 value){
         break;
     }
     case StreamerEnums::COMMAND_C_SET_S_O_X:{
-        setScreenGeometry(value,-1,-1,-1);break;
+        qmlConnector->setProperty("s_x",value);break;
     }
     case StreamerEnums::COMMAND_C_SET_S_O_Y:{
-        setScreenGeometry(-1,value,-1,-1);break;
+        qmlConnector->setProperty("s_y",value);break;
     }
     case StreamerEnums::COMMAND_C_SET_S_S_W:{
-        setScreenGeometry(-1,-1,value,-1);break;
+        qmlConnector->setProperty("s_w",value);break;
     }
     case StreamerEnums::COMMAND_C_SET_S_S_H:{
-        setScreenGeometry(-1,-1,-1,value);break;
+        qmlConnector->setProperty("s_h",value);break;
     }
     case StreamerEnums::COMMAND_C_SET_RECT:{
-        applyNewScreenGeometry();
+        applyNewScreenGeometry();break;
+    }
+    case StreamerEnums::COMMAND_C_PING_LATENCY:{
+        qDebug() << "Latency:" << timeObject.currentDateTime().toMSecsSinceEpoch() << value << (timeObject.currentDateTime().toMSecsSinceEpoch()-value);break;
     }
     case StreamerEnums::COMMAND_C_SET_OVERLAY:{
         bool ok = false;
@@ -130,6 +137,12 @@ void StreamerFrontend::handleCommandSignal(qint8 command,qint16 value){
             QQmlComponent *overlay = new QQmlComponent(qmlBase->rootContext());
 //            overlay->setData(*compData,QUrl(":/overlay/"));
         }
+//        QFile compFile("qrc:/qmlui/TouchOverlay.qml");
+//        if(!compFile.open(QIODevice::ReadOnly)){
+//            qDebug() << "failed to load component";
+//            break;
+//        }
+        break;
     }
     }
 }
@@ -154,7 +167,7 @@ void StreamerFrontend::pluginsInsert(){
             QThread *providerThread = new QThread(this);
             InputPluginInterface *provider = qobject_cast<InputPluginInterface*>(libhandle.instance());
             provider->testFunc();
-            connect(provider,SIGNAL(inputSignal(qint16,qint64,qint64)),SLOT(sendEvent(qint16,qint64,qint64)));
+            connect(provider,SIGNAL(inputSignal(qint16,qint64,qint64)),inputPipe,SLOT(sendPacket(qint16,qint64,qint64)));
             connect(provider,SIGNAL(inputSignal(qint16,qint64,qint64)),SLOT(printPack(qint16,qint64,qint64)));
             provider->moveToThread(providerThread);
             connect(providerThread,SIGNAL(started()),provider,SLOT(start()));

@@ -17,11 +17,8 @@ public:
     {
         setAcceptedMouseButtons(Qt::AllButtons);
         setAcceptHoverEvents(true);
-        f_relDec = 6;
+        f_relDec = 12;
         i_edge = 100;
-//        curr_pnt = QPoint(i_edge,i_edge);
-        mousePressEvent(new QMouseEvent(QEvent::MouseButtonPress,QPoint(1,1),Qt::LeftButton,Qt::AllButtons,Qt::NoModifier));
-        mousePressEvent(new QMouseEvent(QEvent::MouseButtonRelease,QPoint(10,10),Qt::LeftButton,Qt::AllButtons,Qt::NoModifier));
         analogClock.setInterval(25);
         analogClock.setTimerType(Qt::CoarseTimer);
         connect(&analogClock,SIGNAL(timeout()),SLOT(handleEvent()));

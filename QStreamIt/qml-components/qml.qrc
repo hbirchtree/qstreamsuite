@@ -1,7 +1,4 @@
 <RCC>
-    <qresource prefix="/">
-        <file>gethost.qml</file>
-    </qresource>
     <qresource prefix="/icons">
         <file alias="absolute">icons/input-mouse.png</file>
         <file alias="relative">icons/input-tablet.png</file>
@@ -26,14 +23,19 @@
         <file alias="x">icons/edit-delete.png</file>
     </qresource>
     <qresource prefix="/qmlui">
-        <file>StatusBubble.qml</file>
         <file>Display.qml</file>
         <file>StreamView.ui.qml</file>
-        <file>LoaderAnim.qml</file>
-        <file>ClientConnect.qml</file>
-        <file>MouseButtons.qml</file>
-        <file>DigitalKey.qml</file>
-        <file>TouchOverlay.qml</file>
+    </qresource>
+    <qresource prefix="/qmlui/input">
         <file>AnalogStickImplementation.qml</file>
+        <file>DigitalKey.qml</file>
+        <file>MouseButtons.qml</file>
+        <file>TouchOverlay.qml</file>
+        <file>WASDComponent.qml</file>
+    </qresource>
+    <qresource prefix="/qmlui/components">
+        <file>ClientConnect.qml</file>
+        <file>LoaderAnim.qml</file>
+        <file>StatusBubble.qml</file>
     </qresource>
 </RCC>

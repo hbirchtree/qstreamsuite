@@ -5,10 +5,9 @@ QT += widgets network opengl qml quickwidgets multimedia
 SOURCES += main.cpp \
     streamerfrontend.cpp \
     ../socketworker.cpp \
-    ../jsoncomm.cpp \
     datastore.cpp
 
-RESOURCES += qml.qrc
+RESOURCES += qml-components/qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
@@ -21,13 +20,14 @@ HEADERS += \
     ../streamer_enums.h \
     ../socketworker.h \
     ../jsoncomm.h \
-    eventcapture.h \
     datastore.h \
-    analogstick.h \
-    trackpoint.h \
-    inputplugininterface.h
-
-FORMS +=
+    inputplugininterface.h \
+    ui-components/analogstick.h \
+    ui-components/trackpoint.h \
+    ui-components/eventcapture.h \
+    ui-components/digitalkey.h \
+    ui-components/qt-components.h \
+    ../streamer_global.h
 
 #DEFINES += QT_NO_DEBUG_OUTPUT
 
@@ -38,7 +38,6 @@ DISTFILES += \
     android/res/values/libs.xml \
     android/build.gradle \
     android/gradle/wrapper/gradle-wrapper.properties \
-    android/gradlew \
-    TECHNICAL.md
+    android/gradlew
 
 ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android

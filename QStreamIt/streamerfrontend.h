@@ -1,19 +1,12 @@
 #ifndef STREAMERFRONTEND_H
 #define STREAMERFRONTEND_H
 
-#include "../socketworker.h"
-#include "../streamer_enums.h"
-#include "../jsoncomm.h"
+#include "../streamer_global.h"
+#include "ui-components/qt-components.h"
 #include "datastore.h"
-#include "eventcapture.h"
-#include "analogstick.h"
-#include "trackpoint.h"
-
 #include "inputplugininterface.h"
 
 #include <QWidget>
-#include <QGridLayout>
-#include <QMessageBox>
 
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
@@ -22,13 +15,10 @@
 #include <QTcpSocket>
 #include <QHostAddress>
 
-#include <QJsonDocument>
-#include <QJsonParseError>
-#include <QJsonValue>
 #include <QFile>
 #include <QPluginLoader>
 
-#include <QEventLoop>
+#include <QDateTime>
 
 namespace Ui {
 class StreamerFrontend;
@@ -43,6 +33,8 @@ public:
     ~StreamerFrontend();
 
 private:
+
+    QDateTime timeObject;
 
     //Input
     void setupInputSocket(QString ipAddress, quint16 port);
@@ -61,7 +53,6 @@ private:
     //Networking
     bool g_connectedState;
     SocketWorker *inputPipe;
-    JsonComm *inputPipeHandler;
     DataStore *dataStore;
 
 signals:
@@ -83,19 +74,18 @@ private slots:
     void printPack(int t,int v1,int v2){qDebug() << t << v1 << v2;}
     void printPack(qint16 t,qint64 v1,qint64 v2){qDebug() << t << v1 << v2;}
     void printPack(qint16 d,QByteArray *data){qDebug() << d << QString::fromLocal8Bit(*data);}
-    void printPack(qint16 c,qint16 v){qDebug() << c << v;}
+    void printPack(qint16 c,qint64 v){qDebug() << c << v;}
 
     void testSlot(){updateStatusText("TESTICLES");}
     void pluginsInsert();
 
     void sendEvent(int type,int val1,int val2);
-    void sendEvent(qint16 type,qint64 val1,qint64 val2);
 
     void setupNewConnection(QString ip, int port);
     void disconnectServer();
     void socket_disconnectServer();
 
-    void handleCommandSignal(qint8 command, qint16 value);
+    void handleCommandSignal(qint8 command, qint64 value);
 };
 
 #endif // STREAMERFRONTEND_H

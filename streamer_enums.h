@@ -30,7 +30,8 @@ public:
         COMMAND_C_SET_S_O_X, //Screen offset X
         COMMAND_C_SET_S_O_Y,
         COMMAND_C_SET_RECT, //Screen rectangle used to scale coordinates
-        COMMAND_C_REQ_SCREENS
+        COMMAND_C_REQ_SCREENS,
+        COMMAND_C_PING_LATENCY
     };
 };
 

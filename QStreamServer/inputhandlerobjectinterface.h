@@ -7,7 +7,7 @@ class InputHandlerObjectInterface : public QObject
 {
     Q_OBJECT
 public:
-    virtual ~InputHandlerObjectInterface() = 0;
+    virtual ~InputHandlerObjectInterface(){}
 
     virtual void take__input(qint16 t,qint64 v1,qint64 v2) = 0;
     virtual void testFunc() = 0;

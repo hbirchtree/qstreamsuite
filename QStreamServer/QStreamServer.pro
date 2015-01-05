@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui network qml
+QT       += core gui network qml multimedia
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,16 +18,18 @@ SOURCES += main.cpp\
     inputhandler.cpp \
     configreader.cpp \
     ../socketworker.cpp \
-    ../jsoncomm.cpp
+    capturehandler.cpp
 
 HEADERS  += streamserver.h \
     networker.h \
     inputhandler.h \
     configreader.h \
+    ../streamer_global.h \
     ../streamer_enums.h \
     ../socketworker.h \
-    ../jsoncomm.h \
-    inputhandlerobjectinterface.h
+    inputhandlerobjectinterface.h \
+    capturehandler.h \
+    capturinginterface.h
 
 FORMS    += streamserver.ui
 

@@ -23,7 +23,6 @@ void InputHandler::setupInputAssociations(){
         if(instance.value("enabled").toBool()&&(!mapping->isEmpty())){
             QPluginLoader libhandle(instance.value("library").toString(),this);
             InputHandlerObjectInterface *handler;
-//            InputHandlerObjectInterface* handler = qobject_cast<InputHandlerObject*>(libhandle.resolve("create__IHandler"));
             if(libhandle.load()&&libhandle.isLoaded()){
                 handler = qobject_cast<InputHandlerObjectInterface*>(libhandle.instance());
                 handler->testFunc();

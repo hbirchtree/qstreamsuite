@@ -4,7 +4,8 @@
         "i-port": 46600,
         "av-port": 46601,
         "interface": "eth0",
-        "stream-location":"rtmp://www.some-url.net/stream.mov"
+        "stream-location":"rtmp://www.some-url.net/stream.mov",
+        "touch-overlay":"overlay.qml"
     },
     "input-handlers":
     [

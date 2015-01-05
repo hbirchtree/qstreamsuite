@@ -3,8 +3,8 @@
 #include "networker.h"
 #include "configreader.h"
 #include "../streamer_enums.h"
-#include "../jsoncomm.h"
 #include "inputhandler.h"
+#include "capturehandler.h"
 
 #include <QDesktopWidget>
 #include <QWidget>
@@ -15,6 +15,9 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QHash>
+#include <QTimer>
+#include <QDateTime>
+#include <QFile>
 
 #include <QEventLoop>
 
@@ -37,8 +40,11 @@ public slots:
     void insertLogEntry(QString message);
 
 private slots:
+    void pingLatency();
     void handleNewClient(SocketWorker *newSocket);
-    void printByteArray(QByteArray *data);
+    void printByteArray(QByteArray *data){
+        qDebug() << data->size() << data->toBase64();
+    }
 
 private:
     Ui::StreamServer *ui;
@@ -46,6 +52,10 @@ private:
     NetWorker *networker;
     SocketWorker *inputWorker;
     InputHandler *inputHandler;
+    CaptureHandler *captureHandle;
+    QTimer* latencyMeasure;
+
+    QDateTime timerObject;
 
     QHash<QString,QVariant> *configuration;
 

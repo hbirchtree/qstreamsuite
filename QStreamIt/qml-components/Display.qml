@@ -11,7 +11,6 @@ ApplicationWindow{
     width:960
     height:540
 
-    //Used to define screen area
     property int s_x: 0
     property int s_y: 0
     property int s_w: 0
@@ -23,29 +22,25 @@ ApplicationWindow{
         if(w>0)s_w = w
         if(h>0)s_h = h
     }
-    function changeSurfaceScale(x_real,y_real){
-        console.log(x_real)
-        sview.inSurface.xscale = x_real
-        sview.inSurface.yscale = y_real
-        console.log(sview.inSurface.xscale)
-    }
     function applyScreenRect(){
-        console.log("Applying rect")
         changeSurfaceScale(s_w/sview.outSurface.width,s_h/sview.outSurface.height)
     }
-
-    signal insertPlugin()
-
-    signal connectServer(string host,int port)
-    onConnectServer: {loading.startLoading();statusBubbleShow("Connecting to host")}
+    function changeSurfaceScale(x_real,y_real){
+        sview.inSurface.xscale = x_real
+        sview.inSurface.yscale = y_real
+    }
+    function connectingServer(){
+        loading.startLoading()
+        statusBubbleShow("Connecting to host")
+    }
     function connectedServer(){ //Called when the server is actually connected
         statusBubbleShow(qsTr("Connected!"))
         sview.enabled = true
         sview.outSurface.visible = true
         loading.stopLoading()
         t_dis.visible=true
+        t_con.visible=false
     }
-
     function main_disconnect(){
         sview.outSurface.stop()
         sview.outSurface.visible = false
@@ -64,27 +59,58 @@ ApplicationWindow{
         loading.stopLoading()
         console.log("Failure")
     }
-
-    signal disconnectServer()
-    onDisconnectServer: {
-        main_disconnect()
-    }
-
-    signal captureEvent(int type,int val1,int val2)
     function displayStream(url){ //Called when server is connected, should receive a URL to an RTMP stream
         sview.outSurface.stop()
         sview.outSurface.source = url
         sview.outSurface.play()
     }
-    signal testSignal() //Just for science
 
-    signal statusBubblePop();onStatusBubblePop:{status.aniFadeOut.start()} //Used to close status bubble
     function statusBubbleShow(message){
         status.updateStatusText(message)
         console.log(message)
         status.visible = true
         status.aniFadeIn.start()
     }
+    function checkConnect(){
+        if(!clientConnect.ipField.text==""||!clientConnect.portField.text==""){
+            connectServer(clientConnect.ipField.text,clientConnect.portField.text)
+            clientConnect.ipField.text = ""
+            clientConnect.portField.text = ""
+            clientConnect.aniFadeOut.start()
+            clientConnect.enabled = false
+            inputGrab()
+        }
+    }
+    function showUi(){
+        clientConnect.visible = true
+        clientConnect.aniFadeIn.start()
+        clientConnect.enabled = true
+    }
+    function inputGrab(){
+        sview.focus = true
+        sview.inSurface.focus = true
+    }
+    function toggleOverlay(){
+        if(toverlay.enabled){
+            toverlay.enabled=false
+            toverlay.visible=false
+        }else{
+            toverlay.enabled=true
+            toverlay.visible=true
+        }
+    }
+
+    signal insertPlugin()
+    signal connectServer(string host,int port)
+    signal disconnectServer()
+    signal captureEvent(int type,int val1,int val2)
+    signal testSignal() //Just for science
+
+    signal statusBubblePop()
+
+    onStatusBubblePop:{status.aniFadeOut.start()} //Used to close status bubble
+    onHeightChanged: applyScreenRect()
+
 
     StreamView {
         id:sview
@@ -95,29 +121,18 @@ ApplicationWindow{
         anchors.fill:parent
         outSurface.visible: false
         enabled: false
-        onHeightChanged: applyScreenRect()
         inSurface.onKeyPressed: captureEvent(type,keycode,modifiers)
         inSurface.onWheelMoved: captureEvent(type,delta.x,delta.y)
         inSurface.onMouseMovedAbs: captureEvent(type,x+s_x,y+s_y)
         inSurface.onMouseMovedRel: captureEvent(type,x,y)
-        function inputGrab(){focus = true;inSurface.focus = true}
-        function toggleOverlay(){
-            if(toverlay.enabled){
-                toverlay.enabled=false
-                toverlay.visible=false
-            }else{
-                toverlay.enabled=true
-                toverlay.visible=true
-            }
-        }
-        TouchOverlay{
-            id:toverlay
-            anchors.fill:parent
-            onNewEvent: captureEvent(type,v1,v2)
-        }
+        onEnabledChanged: toverlay.enabled = enabled
+        onVisibleChanged: toverlay.visible = visible
     }
-
-
+    TouchOverlay{
+        id:toverlay
+        anchors.fill:parent
+        onNewEvent: captureEvent(type,v1,v2)
+    }
     ClientConnect {
         id: clientConnect
         x: parent.width/2-width/2
@@ -126,27 +141,9 @@ ApplicationWindow{
         height:parent.height/1.5
         enabled:false
         visible:false
-        function checkConnect(){
-            if(!ipField.text==""||!portField.text==""){
-                connectServer(ipField.text,portField.text)
-                ipField.text = ""
-                portField.text = ""
-                clientConnect.aniFadeOut.start()
-                clientConnect.enabled = false
-                sview.inputGrab()
-            }
-        }
-        function showUi(){
-            visible = true
-            clientConnect.aniFadeIn.start()
-            clientConnect.enabled = true
-        }
         aniFadeOut.onStopped: visible = false
         button.onClicked: {checkConnect()}
     }
-
-
-
     LoaderAnim{
         id:loading
         visible:false
@@ -182,7 +179,7 @@ ApplicationWindow{
     }
 
     toolBar:ToolBar{RowLayout{anchors.fill:parent
-            ToolButton{id:t_con;/*text: qsTr("Connect");*/iconSource:"/icons/conn";onClicked: {clientConnect.showUi();visible=false}}
+            ToolButton{id:t_con;/*text: qsTr("Connect");*/iconSource:"/icons/conn";onClicked: {showUi()}}
             ToolButton{id:t_dis;visible:false;/*text: qsTr("Disconnect");*/iconSource:"/icons/disco";onClicked: {disconnectServer()}}
             ToolButton{
                 //                text: qsTr("Test messages/loader")
@@ -257,7 +254,7 @@ ApplicationWindow{
                     MenuItem{
                         text:"Focus"
                         iconSource: "/icons/focus"
-                        onTriggered: sview.inputGrab()
+                        onTriggered: inputGrab()
                     },
                     MenuItem{
                         text:"Fullscreen"
@@ -267,23 +264,7 @@ ApplicationWindow{
                             if(checked){
                                 applicationWindow.visibility=5
                             }else
-                                applicationWindow.visibility=2
-                        }
-                    },
-                    MenuItem{
-                        text:"Analog stick"
-                        checked:true
-                        checkable:true
-                        onTriggered:{
-                            toverlay.sticksToggle()
-                        }
-                    },
-                    MenuItem{
-                        text:"Buttons"
-                        checked:true
-                        checkable:true
-                        onTriggered:{
-                            toverlay.buttonsToggle()
+                                applicationWindow.visibility=1
                         }
                     },
                     MenuItem{
@@ -291,7 +272,7 @@ ApplicationWindow{
                         checked:true
                         checkable:true
                         onTriggered:{
-                            sview.toggleOverlay()
+                            toggleOverlay()
                         }
                     },
                     MenuItem{

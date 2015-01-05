@@ -11,6 +11,7 @@ StreamServer::StreamServer(QString configFile, QWidget *parent) :
     iPort = new quint16(0); //It is easier to initialize these rather than checking if they are valid.
     avPort = new quint16(0);
     interface = new QString();
+    streamUrl = new QString();
     overlayLoaded=false;
 
     loadConfiguration(configFile);
@@ -20,7 +21,6 @@ StreamServer::StreamServer(QString configFile, QWidget *parent) :
 
 StreamServer::~StreamServer()
 {
-
     delete ui;
 }
 
@@ -36,47 +36,51 @@ bool StreamServer::initializeNetworker(){
     catch(...){
         return false;
     }
-
     return true;
 }
 
-void StreamServer::handleNewClient(SocketWorker *newSocket){
+void StreamServer::handleNewClient(SocketWorker *newSocket){qDebug() << "#";
     insertLogEntry("Sent welcome message");
     inputWorker = newSocket;
 //    connect(inputWorker,SIGNAL(dataReceived(QByteArray*)),SLOT(printByteArray(QByteArray*)));
     connect(inputWorker,SIGNAL(reportLogEntry(QString)),SLOT(insertLogEntry(QString)));
 
-    JsonComm *j = new JsonComm(this); //Might just integrate this with SocketWorker some day.
-    connect(inputWorker,SIGNAL(dataReceived(QByteArray*)),j,SLOT(interpretTransmission(QByteArray*)));
     inputWorker->start();
 
-    InputHandler *IH = new InputHandler(configuration->value("input-handlers").toList(),this);
-    connect(j,SIGNAL(newInputSignal(qint16,qint64,qint64)),IH,SLOT(handleInput(qint16,qint64,qint64)),Qt::QueuedConnection);
+    latencyMeasure = new QTimer();
+    latencyMeasure->setInterval(3000);
+    latencyMeasure->setTimerType(Qt::VeryCoarseTimer);
+    connect(latencyMeasure,SIGNAL(timeout()),SLOT(pingLatency()));
+    latencyMeasure->start();
 
-    connect(inputWorker,SIGNAL(destroyed()),IH,SLOT(deleteLater()));
-    connect(inputWorker,SIGNAL(destroyed()),j,SLOT(deleteLater()));
+    inputHandler = new InputHandler(configuration->value("input-handlers").toList(),this);
+    connect(inputWorker,SIGNAL(newInputSignal(qint16,qint64,qint64)),inputHandler,SLOT(handleInput(qint16,qint64,qint64)),Qt::QueuedConnection);
+    connect(inputWorker,SIGNAL(dataReceived(QByteArray*)),inputWorker,SLOT(interpretTransmission(QByteArray*)));
+
+    captureHandle = new CaptureHandler(configuration->value("output-handlers").toList(),this);
+    connect(inputWorker,SIGNAL(clientConnected()),captureHandle,SLOT(startCapture()));
+    connect(inputWorker,SIGNAL(clientDisconnected()),captureHandle,SLOT(stopCapture()));
+    captureHandle->start();
+
+    connect(inputWorker,SIGNAL(clientDisconnected()),latencyMeasure,SLOT(stop()));
 
     QString s_url = *streamUrl;
     if(s_url.isEmpty())
         s_url="rtmp://flash.oit.duke.edu/vod/_definst_/test/Wildlife2.flv";
-    inputWorker->transmitData(j->createTransmission(1,s_url)); //We send the stream URL to the client's data storage
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_STREAM,1)); //We request that the client passes this URL to the stream player. Simple, right?
+    inputWorker->sendPacket(1,s_url); //We send the stream URL to the client's data storage
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_STREAM,1); //We request that the client passes this URL to the stream player. Simple, right?
     QDesktopWidget dw;
     int currentScreen = dw.primaryScreen();
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_REQ_SCREENS,dw.screenCount()));
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_S_O_X,dw.screenGeometry(currentScreen).x()));
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_S_O_Y,dw.screenGeometry(currentScreen).y()));
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_S_S_W,dw.screenGeometry(currentScreen).width()));
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_S_S_H,dw.screenGeometry(currentScreen).height()));
-    inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_RECT,0));
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_REQ_SCREENS,dw.screenCount());
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_S_O_X,dw.screenGeometry(currentScreen).x());
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_S_O_Y,dw.screenGeometry(currentScreen).y());
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_S_S_W,dw.screenGeometry(currentScreen).width());
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_S_S_H,dw.screenGeometry(currentScreen).height());
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_RECT,qint64(0));
     if(overlayLoaded){
-        inputWorker->transmitData(j->createTransmission(2,*overlayData));
-        inputWorker->transmitData(j->createTransmission(StreamerEnums::COMMAND_C_SET_OVERLAY,2));
+        inputWorker->sendPacket(2,overlayData);
+        inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_OVERLAY,2);
     }
-}
-
-void StreamServer::printByteArray(QByteArray *data){
-    qDebug() << data->size() << data->toBase64();
 }
 
 bool StreamServer::loadConfiguration(QString configFile){
@@ -87,13 +91,12 @@ bool StreamServer::loadConfiguration(QString configFile){
         emit insertLogEntry(tr("ConfigReader: Configuration file is empty. Will not be able to load preferences."));
         return false;
     }
-    foreach(QString akey,configuration->keys()){
+    foreach(QString akey,configuration->keys())
         if(akey=="streamer-config"){
             QHash<QString,QVariant> *instance = new QHash<QString,QVariant>(configuration->value(akey).toHash());
             foreach(QString bkey,instance->keys()){
-                if(bkey=="i-port"){
+                if(bkey=="i-port")
                     iPort = new quint16(instance->value(bkey).toDouble());
-                }
                 if(bkey=="av-port")
                     avPort = new quint16(instance->value(bkey).toDouble());
                 if(bkey=="interface")
@@ -101,8 +104,9 @@ bool StreamServer::loadConfiguration(QString configFile){
                 if(bkey=="stream-location")
                     streamUrl = new QString(instance->value(bkey).toString());
                 if(bkey=="touch-overlay"){
+                    qDebug() << instance->value(bkey).toString();
                     QFile overlayFile(instance->value(bkey).toString());
-                    if(!overlayFile.open(QIODevice::ReadOnly)){
+                    if(overlayFile.open(QIODevice::ReadOnly)){
                         overlayData = new QByteArray(overlayFile.readAll());
                         if(overlayData->size()>0)
                             overlayLoaded=true;
@@ -112,7 +116,6 @@ bool StreamServer::loadConfiguration(QString configFile){
                 }
             }
         }
-    }
     delete configreader;
     return true;
 }
@@ -155,4 +158,8 @@ void StreamServer::userChooseFromList(QString message,QStringList options,QStrin
     *targetString = cBox->currentText();
     userDialog->close();
     delete userDialog;
+}
+
+void StreamServer::pingLatency(){
+    inputWorker->sendPacket(StreamerEnums::COMMAND_C_PING_LATENCY,timerObject.currentDateTime().toMSecsSinceEpoch());
 }
