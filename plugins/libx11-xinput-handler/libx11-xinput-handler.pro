@@ -4,8 +4,7 @@
 #
 #-------------------------------------------------
 
-QT += core
-QT -= gui
+QT += core gui
 
 TARGET = x11-xinput-handler
 TEMPLATE = lib
@@ -18,7 +17,7 @@ SOURCES += xinputhandler.cpp
 
 HEADERS += xinputhandler.h\
         libx11-xinput-handler_global.h \
-    ../../QStreamServer/inputhandlerobjectinterface.h
+    ../QStreamSuite/QStreamServer/inputhandlerobjectinterface.h
 
 unix {
     target.path = /usr/lib

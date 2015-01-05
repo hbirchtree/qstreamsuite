@@ -15,7 +15,8 @@ LIBS += -lSDL2
 SOURCES += joystickinput.cpp
 
 HEADERS += joystickinput.h \
-    ../../QStreamIt/inputplugininterface.h
+    ../QStreamSuite/QStreamIt/inputplugininterface.h
+DISTFILES += js-input.json
 
 unix {
     target.path = /usr/lib
