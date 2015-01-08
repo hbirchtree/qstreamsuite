@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QEvent>
 #include <QHash>
+#include <QStringList>
 #include <QPluginLoader>
 #include "inputhandlerobjectinterface.h"
 
@@ -21,14 +22,19 @@ public:
 private:
     QList<QVariant> *configuration;
     QHash<int,InputHandlerObjectInterface*> inputAssoc;
+    QHash<InputHandlerObjectInterface*,QHash<int,QVariant> > pendingRequests;
 
     void setupInputAssociations();
     void insertHandler(InputHandlerObjectInterface* handler,QList<QVariant>* association);
 
 signals:
+    void forwardUserSelect(int servicetag, QStringList options);
 
 public slots:
     void handleInput(qint16 t,qint64 v1,qint64 v2);
+
+private slots:
+    void handlePluginRequest(QStringList options);
 
 };
 

@@ -1,7 +1,6 @@
 #ifndef CAPTURINGINTERFACE
 #define CAPTURINGINTERFACE
 
-#include <QMediaMetaData>
 #include <QObject>
 #include <QStringList>
 
@@ -12,7 +11,7 @@ public:
     ~CaptureInterface() = 0;
     virtual void startCapture() = 0;
     virtual void stopCapture() = 0;
-    virtual QMediaMetaData getMediaSpec() = 0;
+    virtual uint getMediaSpec() = 0;
 signals:
     void newBuffer(QByteArray data);
     void requestUserInput(QStringList options,QString description);

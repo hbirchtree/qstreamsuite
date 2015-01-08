@@ -66,3 +66,8 @@ void InputHandler::handleInput(qint16 t, qint64 v1, qint64 v2){
         qDebug() << "dropped event: " << t << v1 << v2;
     }
 }
+
+void InputHandler::handlePluginRequest(QStringList options){
+    InputHandlerObjectInterface* sourcePlugin = qobject_cast<InputHandlerObjectInterface*>(sender());
+
+}

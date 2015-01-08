@@ -39,7 +39,7 @@ bool StreamServer::initializeNetworker(){
     return true;
 }
 
-void StreamServer::handleNewClient(SocketWorker *newSocket){qDebug() << "#";
+void StreamServer::handleNewClient(SocketWorker *newSocket){
     insertLogEntry("Sent welcome message");
     inputWorker = newSocket;
 //    connect(inputWorker,SIGNAL(dataReceived(QByteArray*)),SLOT(printByteArray(QByteArray*)));
