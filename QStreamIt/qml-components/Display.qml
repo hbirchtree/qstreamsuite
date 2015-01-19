@@ -3,6 +3,8 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
 import QtMultimedia 5.4
+import "qrc:/qmlui/components"
+import "qrc:/qmlui/input"
 
 ApplicationWindow{
     title: qsTr("Streamer")
