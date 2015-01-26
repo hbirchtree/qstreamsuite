@@ -11,14 +11,15 @@ public:
     ~CaptureInterface() = 0;
     virtual void startCapture() = 0;
     virtual void stopCapture() = 0;
-    virtual uint getMediaSpec() = 0;
+    virtual uint bufferSize() = 0;
+    virtual QString pluginName(){return "Generic media plugin";}
 signals:
-    void newBuffer(QByteArray data);
+    void newBuffer(char data[]);
     void requestUserInput(QStringList options,QString description);
 public slots:
-    virtual void receiveUserInput(){}
+    virtual void receiveUserInput(QString option){}
 };
-#define CaptureInterfaceIID "CaptureInterface/1.0"
+#define CaptureInterfaceIID "CaptureInterface/1.1"
 Q_DECLARE_INTERFACE(CaptureInterface,CaptureInterfaceIID)
 
 #endif // CAPTURINGINTERFACE

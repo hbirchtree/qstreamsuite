@@ -12,8 +12,8 @@ InputHandler::InputHandler(QList<QVariant> inconfiguration, QObject *parent) :
 
 InputHandler::~InputHandler(){
     delete configuration;
-    foreach(InputHandlerObjectInterface* handler,inputAssoc.values())
-        delete handler;
+//    foreach(InputHandlerObjectInterface* handler,inputAssoc.values())
+//        delete handler
 }
 
 void InputHandler::setupInputAssociations(){

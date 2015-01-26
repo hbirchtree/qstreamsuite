@@ -3,8 +3,8 @@
 
 CaptureHandler::CaptureHandler(QList<QVariant> inconfig, QObject *parent) : QThread(parent)
 {
-    for(QList<QVariant>::const_iterator i=inconfig.constBegin();i<inconfig.constEnd();i++){
-        vhash el;
+    for(auto const it : inconfig.toStdList()){
+        vhash el = it.toHash();
         if(!el.value("enabled").toBool())
             continue;
         QPluginLoader libload(el.value("library").toString());
@@ -14,11 +14,8 @@ CaptureHandler::CaptureHandler(QList<QVariant> inconfig, QObject *parent) : QThr
             threads.append(capThread);
             plugins.append(capture);
             capture->moveToThread(capThread);
-//            int spec = capture->getMediaSpec();
-//            if((spec & CAPTUREINT_MEDIA_AUDIO)==CAPTUREINT_MEDIA_AUDIO){
-//                connect(capture,SIGNAL(newBuffer(QByteArray)),SLOT(receiveAudioBuffer(QByteArray)));
-//            }else if((spec & CAPTUREINT_MEDIA_VIDEO)==CAPTUREINT_MEDIA_VIDEO)
-//                connect(capture,SIGNAL(newBuffer(QByteArray)),SLOT(receiveVideoBuffer(QByteArray)));
+            qDebug() << "Connected to:" << capture->pluginName();
+            connect(capture,SIGNAL(newBuffer(char[])),SLOT(newMediaBuffer(char[])));
         }else{
             qDebug() << "Failed to load library:" << libload.errorString();
         }
@@ -43,10 +40,6 @@ CaptureHandler::~CaptureHandler()
         delete thrd;
 }
 
-void CaptureHandler::receiveAudioBuffer(QByteArray data){
-    qDebug() << "audio buffer!";
-}
+void CaptureHandler::newMediaBuffer(char incoming[]){
 
-void CaptureHandler::receiveVideoBuffer(QByteArray data){
-    qDebug() << "video buffer!";
 }

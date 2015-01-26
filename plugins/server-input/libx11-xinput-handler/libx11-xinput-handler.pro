@@ -17,7 +17,8 @@ SOURCES += xinputhandler.cpp
 
 HEADERS += xinputhandler.h\
         libx11-xinput-handler_global.h \
-    ../QStreamSuite/QStreamServer/inputhandlerobjectinterface.h
+    ../QStreamSuite/QStreamServer/inputhandlerobjectinterface.h \
+    ../../../QStreamServer/inputhandlerobjectinterface.h
 
 unix {
     target.path = /usr/lib

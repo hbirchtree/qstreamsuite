@@ -26,10 +26,7 @@ signals:
 public slots:
     void startCapture();
     void stopCapture();
-
-private slots:
-    void receiveAudioBuffer(QByteArray data);
-    void receiveVideoBuffer(QByteArray data);
+    void newMediaBuffer(char incoming[]);
 
 private:
 

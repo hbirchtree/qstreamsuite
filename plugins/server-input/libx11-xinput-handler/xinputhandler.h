@@ -9,7 +9,7 @@
 #include <QList>
 #include <QHash>
 #include <QDebug>
-#include "../QStreamSuite/QStreamServer/inputhandlerobjectinterface.h"
+#include "../../../QStreamServer/inputhandlerobjectinterface.h"
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/extensions/XTest.h>
