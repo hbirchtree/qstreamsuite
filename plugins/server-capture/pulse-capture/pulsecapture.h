@@ -2,7 +2,7 @@
 #define PULSECAPTURE_H
 
 #include "pulse-capture_global.h"
-#include "../QStreamSuite/QStreamServer/capturinginterface.h"
+#include "../../../QStreamServer/capturinginterface.h"
 #include <pulse/simple.h>
 #include <pulse/error.h>
 #include <QStringList>
@@ -20,14 +20,16 @@ public:
     ~PulseCapture();
     void startCapture();
     void stopCapture();
-    QMediaMetaData getMediaSpec();
+    AVCodec getSpec();
+    QString pluginName();
 signals:
-    void newBuffer(qint64 timestamp,QByteArray data);
+    void newBuffer(qint64 timestamp,char data[]);
     void requestUserInput(QStringList options,QString description);
 public slots:
     void receiveUserInput();
 
 private:
+    const QString internalPluginName = "PulseAudio Capture";
     bool stop_loop = false;
     pa_simple *src;
     pa_sample_spec spec;

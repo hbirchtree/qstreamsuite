@@ -1,5 +1,5 @@
 #include "pulsecapture.h"
-#define BUFSIZE 1024
+#define BUFSIZE 4096
 
 PulseCapture::PulseCapture()
 {
@@ -18,12 +18,14 @@ void PulseCapture::receiveUserInput(){
 
 }
 
-QMediaMetaData PulseCapture::getMediaSpec(){
-    spec = {
-        .rate = 44100,
-        .channels = 2
-    };
-    return (unsigned int)(CAPTUREINT_MEDIA_AUDIO|CAPTUREINT_AUDIO_44100|CAPTUREINT_AUDIO_2CHANNELS|CAPTUREINT_AUDIO_PCMS16LE);
+AVCodec PulseCapture::getSpec(){
+    AVCodec pulseSpec;
+    pulseSpec.name = AV_CODEC_ID_PCM_S16LE;
+    pulseSpec.type = AVMEDIA_TYPE_AUDIO;
+}
+
+QString PulseCapture::pluginName(){
+    return internalPluginName;
 }
 
 void PulseCapture::startCapture(){
@@ -36,7 +38,7 @@ void PulseCapture::startCapture(){
         qFatal(strerror(error));
         return;
     }
-    QByteArray audioBuffer;
+    char audioBuffer[BUFSIZE];
     qint64 timestamp;
     QDateTime stamper;
     for(;;){
@@ -46,7 +48,6 @@ void PulseCapture::startCapture(){
             break;
         }
         emit newBuffer(timestamp,audioBuffer);
-        audioBuffer.clear();
         if(stop_loop) break;
     }
 }

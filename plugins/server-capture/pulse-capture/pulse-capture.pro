@@ -18,7 +18,8 @@ SOURCES += pulsecapture.cpp
 
 HEADERS += pulsecapture.h\
         pulse-capture_global.h \
-    ../QStreamSuite/QStreamServer/capturinginterface.h
+    ../QStreamSuite/QStreamServer/capturinginterface.h \
+    ../../../QStreamServer/capturinginterface.h
 
 unix {
     target.path = /usr/lib
