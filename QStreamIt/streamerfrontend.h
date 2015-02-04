@@ -14,6 +14,7 @@
 
 #include <QTcpSocket>
 #include <QHostAddress>
+#include <QTimer>
 
 #include <QFile>
 #include <QPluginLoader>
@@ -54,6 +55,7 @@ private:
     bool g_connectedState;
     SocketWorker *inputPipe;
     DataStore *dataStore;
+    QTimer *latencyMeasurer;
 
 signals:
     void updateStatusText(QVariant message); //QVariant in order to work with the QML slot
@@ -70,6 +72,8 @@ public slots:
 private slots:
     void displayError(QString errorString){qDebug() << errorString;updateStatusText(errorString);}
     void forwardStatusText(QString message){emit updateStatusText(message);}
+
+    void pollLatency();
 
     void printPack(int t,int v1,int v2){qDebug() << t << v1 << v2;}
     void printPack(qint16 t,qint64 v1,qint64 v2){qDebug() << t << v1 << v2;}

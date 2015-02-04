@@ -22,6 +22,13 @@ void StreamerFrontend::setupInputSocket(QString ipAddress, quint16 port){
     QTcpSocket *socket = new QTcpSocket(this);
     inputPipe = new SocketWorker(socket,ipAddress,port,this);
 
+    latencyMeasurer = new QTimer();
+    latencyMeasurer->setTimerType(Qt::CoarseTimer);
+    latencyMeasurer->setInterval(3000);
+    connect(inputPipe,SIGNAL(clientDisconnected()),latencyMeasurer,SLOT(stop()));
+    connect(inputPipe,SIGNAL(clientConnected()),latencyMeasurer,SLOT(start()));
+    connect(latencyMeasurer,SIGNAL(timeout()),SLOT(pollLatency()));
+
     connect(inputPipe,SIGNAL(forwardError(QString)),SLOT(displayError(QString)));
     connect(inputPipe,SIGNAL(reportLogEntry(QString)),SLOT(displayError(QString)));
     connect(inputPipe,SIGNAL(newCommandSignal(qint8,qint64)),SLOT(handleCommandSignal(qint8,qint64)));
@@ -45,6 +52,7 @@ void StreamerFrontend::setupInputSocket(QString ipAddress, quint16 port){
     connect(inputPipe,SIGNAL(clientFailed()),inputPipe,SLOT(deleteLater()));
 
     inputPipe->start();
+
     g_connectedState = true;
 }
 
@@ -60,6 +68,7 @@ void StreamerFrontend::setupQMLUI(QUrl qmlUi){
     qmlConnector->setProperty("s_y",0);
     qmlConnector->setProperty("s_w",0);
     qmlConnector->setProperty("s_h",0);
+    qmlConnector->setProperty("netlate",0);
 
     connect(this,SIGNAL(qmlConnectedStatus()),qmlConnector,SLOT(connectedServer()));
     connect(qmlConnector,SIGNAL(captureEvent(int,int,int)),SLOT(sendEvent(int,int,int)));
@@ -90,7 +99,8 @@ void StreamerFrontend::disconnectServer(){
 
 void StreamerFrontend::socket_disconnectServer(){
 //    qmlDisconnectedStatus();
-    delete inputPipe;
+    if(inputPipe)
+        delete inputPipe;
     g_connectedState = false;
 }
 
@@ -179,4 +189,10 @@ void StreamerFrontend::pluginsInsert(){
             qDebug()<<"Plugin loader: " << "Error:" << libhandle.errorString();
         }
     }
+}
+
+void StreamerFrontend::pollLatency(){
+    qDebug() << "polling latency";
+    if(g_connectedState)
+        inputPipe->sendPacket(StreamerEnums::COMMAND_C_PING_LATENCY,timeObject.currentDateTime().toMSecsSinceEpoch());
 }

@@ -175,7 +175,7 @@ void SocketWorker::interpretTransmission(QByteArray *transmission){
         QStringList *input = new QStringList(payload->value("i").toString().split(":"));
         QStringList *v = new QStringList(input->at(1).split(","));
         qint16 t = (qint16)input->at(0).toInt();
-        qint64 v1 = (qint64)v->at(0).toInt();
+        qint64 v1 = v->at(0).toLongLong();
         qint64 v2 = 0;
         if(v->size()>1) //There must be a better way of doing this.
             v2 = (qint64)v->at(1).toInt();
@@ -185,8 +185,9 @@ void SocketWorker::interpretTransmission(QByteArray *transmission){
     }
     case StreamerEnums::TRANSMISSION_COMMAND:{
         QStringList *input = new QStringList(payload->value("c").toString().split(":"));
+        qDebug() << *input;
         qint8 c = (qint8)input->at(0).toInt();
-        qint64 v = (qint64)input->at(1).toInt();
+        qint64 v = input->at(1).toLongLong();
         emit newCommandSignal(c,v);break;
     }
     default:

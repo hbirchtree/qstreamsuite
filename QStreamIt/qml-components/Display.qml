@@ -2,7 +2,10 @@ import QtQuick 2.4
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.Layouts 1.1
+import QtQuick.Dialogs 1.2
 import QtMultimedia 5.4
+import "qrc:/qmlui/components"
+import "qrc:/qmlui/input"
 
 ApplicationWindow{
     title: qsTr("Streamer")
@@ -15,6 +18,7 @@ ApplicationWindow{
     property int s_y: 0
     property int s_w: 0
     property int s_h: 0
+    property int netlate: 0
 
     function setDisplayRect(x,y,w,h){
         if(x>0)s_x = x
@@ -22,6 +26,22 @@ ApplicationWindow{
         if(w>0)s_w = w
         if(h>0)s_h = h
     }
+    MessageDialog {
+        id: messageDial
+        visible: false
+        title: "QStream client"
+        modality: Qt.WindowModal
+        icon: StandardIcon.Information
+        standardButtons: StandardButton.Ok
+
+        function smack(caption,subcaption){
+            messageDial.text = caption;
+            subcaption = ""
+            messageDial.informativeText = subcaption;
+            messageDial.open()
+        }
+    }
+
     function applyScreenRect(){
         changeSurfaceScale(s_w/sview.outSurface.width,s_h/sview.outSurface.height)
     }
@@ -31,10 +51,10 @@ ApplicationWindow{
     }
     function connectingServer(){
         loading.startLoading()
-        statusBubbleShow("Connecting to host")
+        messageDial.smack("Connecting to host")
     }
     function connectedServer(){ //Called when the server is actually connected
-        statusBubbleShow(qsTr("Connected!"))
+        messageDial.smack(qsTr("Connected!"))
         sview.enabled = true
         sview.outSurface.visible = true
         loading.stopLoading()
@@ -48,7 +68,7 @@ ApplicationWindow{
         t_con.visible=true
         t_dis.visible=false
         loading.stopLoading()
-        statusBubbleShow("Disconnected from server")
+        messageDial.smack("Disconnected from server")
     }
     function fail_disconnect(){
         sview.outSurface.stop()
@@ -65,26 +85,19 @@ ApplicationWindow{
         sview.outSurface.play()
     }
 
-    function statusBubbleShow(message){
-        status.updateStatusText(message)
-        console.log(message)
-        status.visible = true
-        status.aniFadeIn.start()
+    function statusBubbleShow(message){ //For legacy functionality
+        messageDial.smack(message)
     }
     function checkConnect(){
         if(!clientConnect.ipField.text==""||!clientConnect.portField.text==""){
             connectServer(clientConnect.ipField.text,clientConnect.portField.text)
             clientConnect.ipField.text = ""
             clientConnect.portField.text = ""
-            clientConnect.aniFadeOut.start()
-            clientConnect.enabled = false
             inputGrab()
         }
     }
     function showUi(){
-        clientConnect.visible = true
-        clientConnect.aniFadeIn.start()
-        clientConnect.enabled = true
+        clientConnect.open()
     }
     function inputGrab(){
         sview.focus = true
@@ -106,9 +119,6 @@ ApplicationWindow{
     signal captureEvent(int type,int val1,int val2)
     signal testSignal() //Just for science
 
-    signal statusBubblePop()
-
-    onStatusBubblePop:{status.aniFadeOut.start()} //Used to close status bubble
     onHeightChanged: applyScreenRect()
 
 
@@ -135,13 +145,7 @@ ApplicationWindow{
     }
     ClientConnect {
         id: clientConnect
-        x: parent.width/2-width/2
-        y: parent.height/2-height/2
-        width:parent.width/1.5
-        height:parent.height/1.5
-        enabled:false
         visible:false
-        aniFadeOut.onStopped: visible = false
         button.onClicked: {checkConnect()}
     }
     LoaderAnim{
@@ -156,15 +160,10 @@ ApplicationWindow{
         anchors.verticalCenter: parent.verticalCenter
         enabled: false
         function startLoading(message){
-            visible = true
             animation.start()
-            if(!message==""){
-                statusBubbleShow(message)
-            }
         }
         function stopLoading(){
             animation.stop()
-            visible = false
         }
     }
     StatusBubble{
@@ -189,6 +188,7 @@ ApplicationWindow{
                     testSignal()
                     if(loading.animation.running){loading.stopLoading()
                     }else{loading.startLoading()}
+                    messageDial.smack("HEHE")
                 }
             }
 

@@ -47,22 +47,15 @@ void StreamServer::handleNewClient(SocketWorker *newSocket){
 
     inputWorker->start();
 
-    latencyMeasure = new QTimer();
-    latencyMeasure->setInterval(3000);
-    latencyMeasure->setTimerType(Qt::VeryCoarseTimer);
-    connect(latencyMeasure,SIGNAL(timeout()),SLOT(pingLatency()));
-    latencyMeasure->start();
-
     inputHandler = new InputHandler(configuration->value("input-handlers").toList(),this);
     connect(inputWorker,SIGNAL(newInputSignal(qint16,qint64,qint64)),inputHandler,SLOT(handleInput(qint16,qint64,qint64)),Qt::QueuedConnection);
+    connect(inputWorker,SIGNAL(newCommandSignal(qint8,qint64)),SLOT(handleCommandSignal(qint8,qint64)));
     connect(inputWorker,SIGNAL(dataReceived(QByteArray*)),inputWorker,SLOT(interpretTransmission(QByteArray*)));
 
     captureHandle = new CaptureHandler(configuration->value("output-handlers").toList(),this);
     connect(inputWorker,SIGNAL(clientConnected()),captureHandle,SLOT(startCapture()));
     connect(inputWorker,SIGNAL(clientDisconnected()),captureHandle,SLOT(stopCapture()));
     captureHandle->start();
-
-    connect(inputWorker,SIGNAL(clientDisconnected()),latencyMeasure,SLOT(stop()));
 
     QString s_url = *streamUrl;
     if(s_url.isEmpty())
@@ -80,6 +73,15 @@ void StreamServer::handleNewClient(SocketWorker *newSocket){
     if(overlayLoaded){
         inputWorker->sendPacket(2,overlayData);
         inputWorker->sendPacket(StreamerEnums::COMMAND_C_SET_OVERLAY,2);
+    }
+}
+
+void StreamServer::handleCommandSignal(qint8 command,qint64 value){
+    switch(command){
+    case StreamerEnums::COMMAND_C_PING_LATENCY:{
+        inputWorker->sendPacket(StreamerEnums::COMMAND_C_PING_LATENCY,value);
+        break;
+    }
     }
 }
 
@@ -158,8 +160,4 @@ void StreamServer::userChooseFromList(QString message,QStringList options,QStrin
     *targetString = cBox->currentText();
     userDialog->close();
     delete userDialog;
-}
-
-void StreamServer::pingLatency(){
-    inputWorker->sendPacket(StreamerEnums::COMMAND_C_PING_LATENCY,timerObject.currentDateTime().toMSecsSinceEpoch());
 }

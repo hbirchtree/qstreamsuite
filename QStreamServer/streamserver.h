@@ -40,7 +40,7 @@ public slots:
     void insertLogEntry(QString message);
 
 private slots:
-    void pingLatency();
+    void handleCommandSignal(qint8 command,qint64 value);
     void handleNewClient(SocketWorker *newSocket);
     void printByteArray(QByteArray *data){
         qDebug() << data->size() << data->toBase64();
@@ -53,7 +53,6 @@ private:
     SocketWorker *inputWorker;
     InputHandler *inputHandler;
     CaptureHandler *captureHandle;
-    QTimer* latencyMeasure;
 
     QDateTime timerObject;
 
