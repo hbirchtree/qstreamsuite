@@ -1,13 +1,12 @@
 import QtQuick 2.0
 
-MultiPointTouchArea{
+Item{
     id:touchoverlay
     anchors.fill:parent
     width:1000
     height:1000
     property int keysize: stick.width/2
     signal newEvent(int type,int v1,int v2)
-    onNewEvent: console.log(type,v1,v2)
     signal clockOn(bool enable)
     onClockOn: {
         if(enable){
@@ -143,6 +142,7 @@ MultiPointTouchArea{
         anchors.bottomMargin: 6
         width: parent.width/14*3
         onNewEvent: parent.newEvent(type,v1,v2)
+        visible:false
     }
 
     MouseButtons {

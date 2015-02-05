@@ -36,7 +36,7 @@ ApplicationWindow{
 
         function smack(caption,subcaption){
             messageDial.text = caption;
-            subcaption = ""
+            subcaption = subcaption ? subcaption : ""
             messageDial.informativeText = subcaption;
             messageDial.open()
         }
@@ -50,14 +50,12 @@ ApplicationWindow{
         sview.inSurface.yscale = y_real
     }
     function connectingServer(){
-        loading.startLoading()
         messageDial.smack("Connecting to host")
     }
     function connectedServer(){ //Called when the server is actually connected
         messageDial.smack(qsTr("Connected!"))
         sview.enabled = true
         sview.outSurface.visible = true
-        loading.stopLoading()
         t_dis.visible=true
         t_con.visible=false
     }
@@ -67,7 +65,6 @@ ApplicationWindow{
         sview.enabled = false
         t_con.visible=true
         t_dis.visible=false
-        loading.stopLoading()
         messageDial.smack("Disconnected from server")
     }
     function fail_disconnect(){
@@ -76,7 +73,6 @@ ApplicationWindow{
         sview.inSurface.enabled = false
         t_con.visible=true
         t_dis.visible=false
-        loading.stopLoading()
         console.log("Failure")
     }
     function displayStream(url){ //Called when server is connected, should receive a URL to an RTMP stream
@@ -87,17 +83,6 @@ ApplicationWindow{
 
     function statusBubbleShow(message){ //For legacy functionality
         messageDial.smack(message)
-    }
-    function checkConnect(){
-        if(!clientConnect.ipField.text==""||!clientConnect.portField.text==""){
-            connectServer(clientConnect.ipField.text,clientConnect.portField.text)
-            clientConnect.ipField.text = ""
-            clientConnect.portField.text = ""
-            inputGrab()
-        }
-    }
-    function showUi(){
-        clientConnect.open()
     }
     function inputGrab(){
         sview.focus = true
@@ -121,7 +106,6 @@ ApplicationWindow{
 
     onHeightChanged: applyScreenRect()
 
-
     StreamView {
         id:sview
         anchors.rightMargin: 0
@@ -137,48 +121,28 @@ ApplicationWindow{
         inSurface.onMouseMovedRel: captureEvent(type,x,y)
         onEnabledChanged: toverlay.enabled = enabled
         onVisibleChanged: toverlay.visible = visible
-    }
-    TouchOverlay{
-        id:toverlay
-        anchors.fill:parent
-        onNewEvent: captureEvent(type,v1,v2)
+        Text{
+            text: netlate
+            styleColor: "#000000"
+            style: Text.Outline
+            color:"#e200ff"
+        }
+        TouchOverlay{
+            id:toverlay
+            anchors.fill:parent
+            onNewEvent: captureEvent(type,v1,v2)
+        }
     }
     ClientConnect {
         id: clientConnect
-        visible:false
-        button.onClicked: {checkConnect()}
-    }
-    LoaderAnim{
-        id:loading
-        visible:false
-        animation.loops: Animation.Infinite
-        x:parent.width/2-width
-        y:parent.height/2-height
-        width:parent.height/12
-        height:width
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        enabled: false
-        function startLoading(message){
-            animation.start()
+        onRequestConnect: {
+            connectServer(ipS,portS)
+            inputGrab()
         }
-        function stopLoading(){
-            animation.stop()
-        }
-    }
-    StatusBubble{
-        id:status
-        anchors.horizontalCenter: parent.horizontalCenter
-        visible:false
-        width: 240+parent.width/6
-        height: 64+parent.height/9
-        anchors.bottom: loading.top
-        popper.onClicked: {aniFadeOut.start();mouse.accepted=true}
-        aniFadeOut.onStopped: visible = false
     }
 
     toolBar:ToolBar{RowLayout{anchors.fill:parent
-            ToolButton{id:t_con;/*text: qsTr("Connect");*/iconSource:"/icons/conn";onClicked: {showUi()}}
+            ToolButton{id:t_con;/*text: qsTr("Connect");*/iconSource:"/icons/conn";onClicked: {clientConnect.open()}}
             ToolButton{id:t_dis;visible:false;/*text: qsTr("Disconnect");*/iconSource:"/icons/disco";onClicked: {disconnectServer()}}
             ToolButton{
                 //                text: qsTr("Test messages/loader")
@@ -186,8 +150,6 @@ ApplicationWindow{
                 onClicked: {
                     changeSurfaceScale(2,2)
                     testSignal()
-                    if(loading.animation.running){loading.stopLoading()
-                    }else{loading.startLoading()}
                     messageDial.smack("HEHE")
                 }
             }

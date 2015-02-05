@@ -136,7 +136,8 @@ void StreamerFrontend::handleCommandSignal(qint8 command,qint64 value){
         applyNewScreenGeometry();break;
     }
     case StreamerEnums::COMMAND_C_PING_LATENCY:{
-        qDebug() << "Latency:" << timeObject.currentDateTime().toMSecsSinceEpoch() << value << (timeObject.currentDateTime().toMSecsSinceEpoch()-value);break;
+        qmlConnector->setProperty("netlate",timeObject.currentDateTime().toMSecsSinceEpoch()-value);
+        break;
     }
     case StreamerEnums::COMMAND_C_SET_OVERLAY:{
         bool ok = false;
