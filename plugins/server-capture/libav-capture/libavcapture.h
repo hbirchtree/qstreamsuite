@@ -7,6 +7,8 @@
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/mathematics.h>
+#include <QCoreApplication>
 
 class LIBAVCAPTURESHARED_EXPORT Libavcapture : public CaptureInterface
 {
@@ -31,11 +33,7 @@ public slots:
 private:
 
     //Constants
-    const double streamDuration = 0.5;
-    const char streamFramerate = 30; //That cinematic experience
-    const AVPixelFormat streamPixFmt = PIX_FMT_YUV420P9;
     const QString internalPluginName = "LibAV Capture";
-    const short sws_flags = SWS_BICUBIC;
 
     const qint32 audio_bitrate = 64000;
     const qint32 audio_samplerate = 44100;
@@ -46,10 +44,29 @@ private:
     const qint32 video_w = 1600;
     const qint32 video_h = 900;
     const qint32 video_gopsize = 12;
+    const AVPixelFormat streamPixFmt = PIX_FMT_YUV420P9;
+    const short sws_flags = SWS_BICUBIC;
+    const char streamFramerate = 30;
+    qint32 streamNbFrames = 0;
+
+    //AV variables
+    qint16 *a_samples;
+    quint16 *a_outbuf;
+    qint32 a_outbuf_sz;
+    qint32 a_i_framesz;
+
+    AVFrame *picture,*tmp_picture;
+    quint32 *v_outbuf;
+    qint32 v_framecount,v_outbuf_sz;
+
+    //AV variables
+    bool continueEncode = true; //used to keep the encoder alive, set to false when stopping
 
     //AV functions
     AVStream* add_audio_stream(AVFormatContext* oc, enum CodecID codec_id);
     AVStream* add_video_stream(AVFormatContext* oc, enum CodecID codec_id);
+    void write_aframe(AVFormatContext *oc,AVStream *st);
+    void write_vframe(AVFormatContext *oc,AVStream *st);
 };
 
 #endif // LIBAVCAPTURE_H

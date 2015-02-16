@@ -17,7 +17,8 @@ SOURCES += libavcapture.cpp
 
 HEADERS += libavcapture.h\
         libav-capture_global.h \
-    ../../../QStreamServer/capturinginterface.h
+    ../../../QStreamServer/capturinginterface.h \
+    muxer.h
 
 unix {
     target.path = /usr/lib
