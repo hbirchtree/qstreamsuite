@@ -9,7 +9,7 @@ QT       -= gui
 TARGET = libav-capture
 TEMPLATE = lib
 
-LIBS += -lavcodec -lavformat -lswscale
+LIBS += -lavcodec -lavformat -lswscale -lswresample -lavutil
 
 DEFINES += LIBAVCAPTURE_LIBRARY
 
@@ -17,8 +17,7 @@ SOURCES += libavcapture.cpp
 
 HEADERS += libavcapture.h\
         libav-capture_global.h \
-    ../../../QStreamServer/capturinginterface.h \
-    muxer.h
+    ../../../QStreamServer/capturinginterface.h
 
 unix {
     target.path = /usr/lib
