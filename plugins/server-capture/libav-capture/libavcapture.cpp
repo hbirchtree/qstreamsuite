@@ -31,7 +31,127 @@ Libavcapture::Libavcapture()
 }
 
 void Libavcapture::startCapture(){
+    QStringList argv;
+    argv.append("muxer-example");
+    argv.append("test.mkv");
+    encodeStart(argv.size(),argv);
+}
 
+int Libavcapture::encodeStart(int argc, QStringList argv)
+{
+    OutputStream video_st = { 0 }, audio_st = { 0 };
+    const char *filename;
+    AVOutputFormat *fmt;
+    AVFormatContext *oc;
+    AVCodec *audio_codec, *video_codec;
+    int ret;
+    int have_video = 0, have_audio = 0;
+    int encode_video = 0, encode_audio = 0;
+    AVDictionary *opt = NULL;
+
+    /* Initialize libavcodec, and register all codecs and formats. */
+    av_register_all();
+
+    if (argc < 2) {
+        qDebug("usage: %s output_file\n"
+               "API example program to output a media file with libavformat.\n"
+               "This program generates a synthetic audio and video stream, encodes and\n"
+               "muxes them into a file named output_file.\n"
+               "The output format is automatically guessed according to the file extension.\n"
+               "Raw images can also be output by using '%%d' in the filename.\n"
+               "\n", argv[0].toLocal8Bit().data());
+        return 1;
+    }
+
+    filename = argv[1].toLocal8Bit().data();
+    qDebug() << filename;
+    if (argc > 3 && argv[2] != "-flags") {
+        av_dict_set(&opt, argv[2].toLocal8Bit().data(), argv[3].toLocal8Bit().data(), 0);
+    }
+
+    /* allocate the output media context */
+    avformat_alloc_output_context2(&oc, NULL, NULL, filename);
+    if (!oc) {
+        printf("Could not deduce output format from file extension: using MPEG.\n");
+        avformat_alloc_output_context2(&oc, NULL, "mpeg", filename);
+    }
+    if (!oc)
+        return 1;
+
+    fmt = oc->oformat;
+
+    /* Add the audio and video streams using the default format codecs
+     * and initialize the codecs. */
+    if (fmt->video_codec != AV_CODEC_ID_NONE) {
+        add_stream(&video_st, oc, &video_codec, fmt->video_codec);
+        have_video = 1;
+        encode_video = 1;
+    }
+    if (fmt->audio_codec != AV_CODEC_ID_NONE) {
+        add_stream(&audio_st, oc, &audio_codec, fmt->audio_codec);
+        have_audio = 1;
+        encode_audio = 1;
+    }
+
+    /* Now that all the parameters are set, we can open the audio and
+     * video codecs and allocate the necessary encode buffers. */
+    if (have_video)
+        open_video(oc, video_codec, &video_st, opt);
+
+    if (have_audio)
+        open_audio(oc, audio_codec, &audio_st, opt);
+
+    av_dump_format(oc, 0, filename, 1);
+
+    /* open the output file, if needed */
+    if (!(fmt->flags & AVFMT_NOFILE)) {
+        ret = avio_open(&oc->pb, filename, AVIO_FLAG_WRITE);
+        if (ret < 0) {
+            fprintf(stderr, "Could not open '%s': %s\n", filename,
+                    qPrintable(ret));
+            return 1;
+        }
+    }
+
+    /* Write the stream header, if any. */
+    ret = avformat_write_header(oc, &opt);
+    if (ret < 0) {
+        fprintf(stderr, "Error occurred when opening output file: %s\n",
+                qPrintable(ret));
+        return 1;
+    }
+
+    while (encode_video || encode_audio) {
+        /* select the stream to encode */
+        if (encode_video &&
+            (!encode_audio || av_compare_ts(video_st.next_pts, video_st.st->codec->time_base,
+                                            audio_st.next_pts, audio_st.st->codec->time_base) <= 0)) {
+            encode_video = !write_video_frame(oc, &video_st);
+        } else {
+            encode_audio = !write_audio_frame(oc, &audio_st);
+        }
+    }
+
+    /* Write the trailer, if any. The trailer must be written before you
+     * close the CodecContexts open when you wrote the header; otherwise
+     * av_write_trailer() may try to use memory that was freed on
+     * av_codec_close(). */
+    av_write_trailer(oc);
+
+    /* Close each codec. */
+    if (have_video)
+        close_stream(oc, &video_st);
+    if (have_audio)
+        close_stream(oc, &audio_st);
+
+    if (!(fmt->flags & AVFMT_NOFILE))
+        /* Close the output file. */
+        avio_closep(&oc->pb);
+
+    /* free the stream */
+    avformat_free_context(oc);
+
+    return 0;
 }
 
 AVFrame* Libavcapture::get_audio_frame(OutputStream *ost)
@@ -240,7 +360,7 @@ int Libavcapture::write_frame(AVFormatContext *fmt_ctx, const AVRational *time_b
     return av_interleaved_write_frame(fmt_ctx, pkt);
 }
 
-static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
+int Libavcapture::write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 {
     AVCodecContext *c;
     AVPacket pkt = { 0 }; // data and size must be 0;
@@ -285,7 +405,7 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 
     ret = avcodec_encode_audio2(c, &pkt, frame, &got_packet);
     if (ret < 0) {
-        fprintf(stderr, "Error encoding audio frame: %s\n", av_err2str(ret));
+        fprintf(stderr, "Error encoding audio frame: %s\n", qPrintable(ret));
         exit(1);
     }
 
@@ -293,7 +413,7 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
         ret = write_frame(oc, &c->time_base, ost->st, &pkt);
         if (ret < 0) {
             fprintf(stderr, "Error while writing audio frame: %s\n",
-                    av_err2str(ret));
+                    qPrintable(ret));
             exit(1);
         }
     }
@@ -304,7 +424,7 @@ static int write_audio_frame(AVFormatContext *oc, OutputStream *ost)
 /**************************************************************/
 /* video output */
 
-static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
+AVFrame* Libavcapture::alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
 {
     AVFrame *picture;
     int ret;
@@ -339,7 +459,7 @@ void Libavcapture::open_video(AVFormatContext *oc, AVCodec *codec, OutputStream 
     ret = avcodec_open2(c, codec, &opt);
     av_dict_free(&opt);
     if (ret < 0) {
-        fprintf(stderr, "Could not open video codec: %s\n", av_err2str(ret));
+        fprintf(stderr, "Could not open video codec: %s\n", qPrintable(ret));
         exit(1);
     }
 

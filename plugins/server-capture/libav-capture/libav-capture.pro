@@ -9,7 +9,7 @@ QT       -= gui
 TARGET = libav-capture
 TEMPLATE = lib
 
-LIBS += -lavcodec -lavformat -lswscale -lswresample -lavutil
+LIBS += -lavutil -lavformat -lavcodec -lswscale -lswresample
 
 DEFINES += LIBAVCAPTURE_LIBRARY
 

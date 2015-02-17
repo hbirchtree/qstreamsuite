@@ -3,12 +3,16 @@
 
 #include "../../../QStreamServer/capturinginterface.h"
 #include "libav-capture_global.h"
+#include <QDebug>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
+#include <QCoreApplication>
+
+extern "C"  {
 #include <libavutil/avassert.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/opt.h>
@@ -17,8 +21,7 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
-
-#include <QCoreApplication>
+}
 
 class LIBAVCAPTURESHARED_EXPORT Libavcapture : public CaptureInterface
 {
@@ -80,21 +83,24 @@ private:
     void add_stream(OutputStream *ost, AVFormatContext *oc,
                            AVCodec **codec,
                            enum AVCodecID codec_id);
-    void close_stream(AVFormatContext *oc, OutputStream *ost):
+    void close_stream(AVFormatContext *oc, OutputStream *ost);
+    int encodeStart(int argc, QStringList argv);
     //Audio
     void open_audio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg);
     AVFrame* alloc_audio_frame(enum AVSampleFormat sample_fmt,
                                       uint64_t channel_layout,
                                       int sample_rate, int nb_samples);
     AVFrame* get_audio_frame(OutputStream *ost);
-
+    int write_audio_frame(AVFormatContext *oc, OutputStream *ost);
 
     //Video
+
     void open_video(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt_arg);
     AVFrame* get_video_frame(OutputStream *ost);
     void fill_yuv_image(AVFrame *pict, int frame_index,
                                int width, int height);
     int write_video_frame(AVFormatContext *oc, OutputStream *ost);
+    AVFrame* alloc_picture(enum AVPixelFormat pix_fmt, int width, int height);
 };
 
 #endif // LIBAVCAPTURE_H
