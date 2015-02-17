@@ -4,6 +4,7 @@
 #include "../../../QStreamServer/capturinginterface.h"
 #include "libav-capture_global.h"
 #include <libavformat/avformat.h>
+#include <libavformat/avio.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavcodec/avcodec.h>
@@ -47,7 +48,6 @@ private:
     const AVPixelFormat streamPixFmt = PIX_FMT_YUV420P9;
     const short sws_flags = SWS_BICUBIC;
     const char streamFramerate = 30;
-    qint32 streamNbFrames = 0;
 
     //AV variables
     qint16 *a_samples;

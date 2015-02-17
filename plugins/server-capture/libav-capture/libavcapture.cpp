@@ -15,8 +15,6 @@ void Libavcapture::startCapture(){
 
     of->flags = AVFMT_NOFILE;
 
-    streamNbFrames = 5*streamFramerate;
-
     fc = avformat_alloc_context();
     fc->audio_codec_id = AV_CODEC_ID_AAC;
     fc->video_codec_id = AV_CODEC_ID_H264;
@@ -58,6 +56,7 @@ void Libavcapture::startCapture(){
     }
 }
 
+//Not finished!
 void Libavcapture::write_aframe(AVFormatContext *oc,AVStream *st){
     AVCodecContext *c;
     AVPacket pkt;
@@ -77,6 +76,7 @@ void Libavcapture::write_aframe(AVFormatContext *oc,AVStream *st){
         qFatal("Failed writing audio frame");
 }
 
+//Not finished!
 void Libavcapture::write_vframe(AVFormatContext *oc,AVStream *st){
     qint32 outsize,ret;
     AVCodecContext *c;
@@ -115,11 +115,24 @@ void Libavcapture::write_vframe(AVFormatContext *oc,AVStream *st){
             AVPacket pkt;
             av_init_packet(&pkt);
             
-            if(c->coded_frame)
-        }
+            if(c->coded_frame->pts != AV_NOPTS_VALUE)
+                pkt.pts = av_rescale_q(c->coded_frame->pts,c->time_base,st->time_base);
+            if(c->coded_frame->key_frame)
+                pkt.flags |= AV_PKT_FLAG_KEY;
+            pkt.stream_index = st->index;
+            pkt.data = v_outbuf;
+            pkt.size = outsize;
+
+            ret = av_interleaved_write_frame(oc,&pkt);
+        }else
+            ret = 0;
     }
+    if(ret!=0)
+        qFatal("Error writing video frame");
+    v_framecount++;
 }
 
+//Finished
 AVStream* Libavcapture::add_audio_stream(AVFormatContext* oc, enum CodecID codec_id){
     AVCodecContext *c;
     AVStream *st;
@@ -140,6 +153,7 @@ AVStream* Libavcapture::add_audio_stream(AVFormatContext* oc, enum CodecID codec
     return st;
 }
 
+//Finished
 AVStream* Libavcapture::add_video_stream(AVFormatContext* oc, enum CodecID codec_id){
     AVCodecContext *c;
     AVStream *st;
