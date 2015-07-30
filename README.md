@@ -3,6 +3,8 @@ qstreamsuite
 
 Like VNC/RDP/Splashtop, only worse.
 
+**Note:** This project has been abandoned because of the difficulty in maintaining it. A reimplementation has been made, although not at feature parity, but makes it all a lot easier to understand: https://github.com/hbirchtree/Tear
+
 What is the goal of this project?
 ============
 To create a modular base on which it is possible to send one computer's input to another while being being able to observe the display, all remotely over a network connection.
